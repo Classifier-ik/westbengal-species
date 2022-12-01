@@ -56,8 +56,8 @@ selected = option_menu(
 if selected == "Project":
     # st.title("Karam and Ishan's Simple Image Classification App")
     st.write("")
-
-    file_up = st.file_uploader("Upload an image", type=['jpg', 'png', 'jpeg'])
+    st.header("Upload an image")
+    file_up = st.file_uploader("", type=['jpg', 'png', 'jpeg'])
 
     if file_up is not None:
         image = Image.open(file_up)

@@ -38,6 +38,7 @@ def predict(image_path):
     return (float(max(prob)), classes[0][int(title[0])-1].split('.')[0])
 
 
+st.set_page_config(layout="wide")
 st.set_option('deprecation.showfileUploaderEncoding', False)
 
 selected = option_menu(
@@ -48,7 +49,7 @@ selected = option_menu(
     menu_icon="cast",
     icons=['house-fill', 'gear-fill'],
     styles={
-        "nav-link-selected": {"background-color": "#1c0d3e"},
+        "nav-link-selected": {"background-color": "#82faa4"},
     }
 )
 
@@ -72,7 +73,7 @@ if selected == "Project":
             # st.write(results)
             if score > 60:
                 st.write("Prediction (name): ",
-                         score, ",   \nScore: ", bird_name)
+                         bird_name, ",   \nScore: ", score)
             else:
                 st.write("No such bird in database!")
 

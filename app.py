@@ -56,7 +56,7 @@ selected = option_menu(
 if selected == "Project":
     # st.title("Karam and Ishan's Simple Image Classification App")
     st.write("")
-    st.header("Upload an image \U0001F447\U0001F447\U0002198")
+    st.header("Upload an image \U0001F447\U0001F447\U00012198")
     file_up = st.file_uploader("", type=['jpg', 'png', 'jpeg'])
 
     if file_up is not None:

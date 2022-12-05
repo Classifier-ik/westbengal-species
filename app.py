@@ -145,7 +145,7 @@ if selected == "Project":
 
     if file_up is not None:
         image = Image.open(file_up)
-        file_details = {"FileName":image.name,"FileType":image.type}
+        file_details = {"FileName":file_up.name,"FileType":file_up.type}
         col1, col2 = st.columns([0.5, 0.5])
         with col1:
             st.image(image, caption='Uploaded Image.', use_column_width=True)

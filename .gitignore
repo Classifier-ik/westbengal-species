@@ -1,1 +1,7 @@
 runs/
+
+# ignore all directories with the name tempdir
+tempdir/
+
+#ignore test.db
+test.db

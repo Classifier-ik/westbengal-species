@@ -8,6 +8,7 @@ import sqlite3
 from sqlite3 import Connection
 import pickle
 import hashlib
+import uuid
 from streamlit_option_menu import option_menu
 
 with open('classlabels.pkl', 'rb') as f:
@@ -41,7 +42,7 @@ def init_db(conn: Connection):
                             filepath TEXT NOT NULL UNIQUE,
                             predicted TEXT NOT NULL,
                             userinput TEXT NOT NULL,
-                            user_id INTEGER NOT NULL,
+                            user_id INTEGER,
                             validity TINYINT
                     );""")
     conn.execute("""CREATE TABLE IF NOT EXISTS userstable
@@ -149,7 +150,8 @@ if selected == "Project":
         with col1:
             st.image(image, caption='Uploaded Image.', use_column_width=True)
             st.write("")
-            image.save(os.path.join(curr_path,"tempdir",file_up.name))
+            # insert checking for file name repeation in single user and within various user
+            image.save(os.path.join(curr_path,"tempdir",str(uuid.uuid4())+file_up.name))
             '''  
             with open(os.path.join(curr_path,"tempdir",file_up.name), 'wb') as handler:
                 handler.write(image)
@@ -161,9 +163,16 @@ if selected == "Project":
             # st.write(results)
             if score > 60:
                 st.write("Prediction (name): ",
-                         bird_name, ",   \nScore: ", score)
+                        bird_name, ",   \nScore: ", score)
+                user_val = st.text_area('Confirm bird name', '''Enter bird name''')
             else:
                 st.write("No such bird in database!")
+                user_val = st.text_area('Confirm bird name', '''Enter bird name''')
+        try:
+            c.execute('INSERT INTO test(filepath,predicted,userinput,validity) VALUES (?,?,?,?)',(os.path.join(curr_path,"tempdir",file_up.name),bird_name,user_val,0))
+        except:
+            c.execute('UPDATE test SET userinput = ? where filepath=?',(user_val, os.path.join(curr_path,"tempdir",file_up.name)))
+        conn.commit()
 
 elif selected == "Home":
     st.title("West bengal bird species classification project")

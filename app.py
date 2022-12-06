@@ -54,7 +54,13 @@ if selected == "Project":
                     if new_bird_name == "":
                         st.write("Enter bird name!")
                     else:
+                        wait_text = st.empty()
+                        wait_text.text("Wait for the image to upload...")
                         upload(new_bird_name, image)
+                        wait_text.empty()
+                        st.write(
+                            "Fininshed upload! Thank you for contributing.")
+
 
 elif selected == "Home":
     st.title("West bengal bird species classification project")

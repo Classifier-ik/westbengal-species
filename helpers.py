@@ -3,9 +3,15 @@ from torchvision import models, transforms
 import torch
 import pandas
 import pickle
+import random
+import io
+import numpy as np
 from github import Github
 
-g = Github("Classifier-ik", "whitebeard1999")
+g = Github("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")
+
+with open('demo.txt', 'r') as file:
+    content = file.read()
 
 
 def predict(image_path, class_names):
@@ -37,6 +43,8 @@ def predict(image_path, class_names):
 
 
 def upload(name, image):
+    buf = io.BytesIO()
+    image.save(buf, format='JPEG')
     repo = g.get_user().get_repo("westbengal-species")
     all_files = []
     contents = repo.get_contents("")
@@ -49,18 +57,11 @@ def upload(name, image):
             all_files.append(str(file).replace(
                 'ContentFile(path="', '').replace('")', ''))
 
-    with open('/tmp/file.txt', 'r') as file:
-        content = file.read()
-
     # Upload to github
-    git_prefix = 'folder1/'
-    git_file = git_prefix + 'file.txt'
-    if git_file in all_files:
-        contents = repo.get_contents(git_file)
-        repo.update_file(contents.path, "committing files",
-                         content, contents.sha, branch="master")
-        print(git_file + ' UPDATED')
-    else:
-        repo.create_file(git_file, "committing files",
-                         content, branch="master")
-        print(git_file + ' CREATED')
+    git_prefix = 'future_data/'
+    git_file = git_prefix + name + "_" + \
+        str(random.randint(0, 999999)) + '.jpg'
+    repo.create_file(git_file, "committing files",
+                     buf.getvalue(), branch="main")
+    print(git_file + ' CREATED')
+    return True

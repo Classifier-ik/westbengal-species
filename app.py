@@ -4,39 +4,11 @@ from torchvision import models, transforms
 import torch
 import pandas
 import pickle
+from helpers import predict, upload
 from streamlit_option_menu import option_menu
 
 with open('classlabels.pkl', 'rb') as f:
     class_names = pickle.load(f)
-
-
-def predict(image_path):
-    model = torch.load('Googlenet_50_epochs',
-                       map_location=torch.device('cpu'))
-
-    # https://pytorch.org/docs/stable/torchvision/models.html
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        )])
-
-    img = Image.open(image_path)
-    batch_t = torch.unsqueeze(transform(img), 0)
-
-    model.eval()
-    outputs = model(batch_t)
-    _, predicted = torch.max(outputs, 1)
-    title = [class_names[x] for x in predicted]
-    prob = torch.nn.functional.softmax(outputs, dim=1)[0] * 100
-    classes = pandas.read_csv('bird_dataset.csv', header=None)
-    # print("prob: ", float(max(prob)))
-    # print("title: ", title[0])
-    # print("name: ", classes[0][int(title[0])-1].split('.')[0])
-    return (float(max(prob)), classes[0][int(title[0])-1].split('.')[0])
-
 
 st.set_page_config(layout="wide")
 st.set_option('deprecation.showfileUploaderEncoding', False)
@@ -69,13 +41,20 @@ if selected == "Project":
 
         with col2:
             st.write("Your results are served here...")
-            score, bird_name = predict(file_up)
+            score, bird_name = predict(file_up, class_names)
             # st.write(results)
             if score > 60:
                 st.write("Prediction (name): ",
                          bird_name, ",   \nScore: ", score)
             else:
                 st.write("No such bird in database!")
+                new_bird_name = st.text_input(
+                    'Bird Name', '', placeholder="Enter bird name here....")
+                if(st.button('Upload this bird to dataset!')):
+                    if new_bird_name == "":
+                        st.write("Enter bird name!")
+                    else:
+                        upload(new_bird_name, image)
 
 elif selected == "Home":
     st.title("West bengal bird species classification project")

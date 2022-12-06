@@ -8,10 +8,7 @@ import io
 import numpy as np
 from github import Github
 
-g = Github("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")
-
-with open('demo.txt', 'r') as file:
-    content = file.read()
+g = Github("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")
 
 
 def predict(image_path, class_names):

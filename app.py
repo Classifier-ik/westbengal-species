@@ -10,6 +10,8 @@ import pickle
 import hashlib
 import uuid
 from streamlit_option_menu import option_menu
+from st_aggrid import GridOptionsBuilder, AgGrid
+from st_aggrid.shared import GridUpdateMode, DataReturnMode
 
 with open('classlabels.pkl', 'rb') as f:
     class_names = pickle.load(f)
@@ -219,9 +221,51 @@ elif selected == "Login":
                     print(result)
                     if result[3] == 1:
                         user_result = view_all_images()
+                        clean_db = pandas.DataFrame(user_result,columns=["id","filepath","predicted","userinput","user_id","validity"])
+                        gb = GridOptionsBuilder.from_dataframe(clean_db)
+                        gb.configure_column("id", header_name=("id"), editable=False)
+                        gb.configure_column("filepath", header_name=("filepath"), editable=False)
+                        gb.configure_column("predicted", header_name=("predicted"), editable=False)
+                        gb.configure_column("userinput", header_name=("userinput"), editable=True)
+                        gb.configure_column("user_id", header_name=("user_id"), editable=False)
+                        gb.configure_column("validity", header_name=("validity"), editable=True,precision=0)
                     else:
                         user_result = view_my_images(result[0])
-                    clean_db = pandas.DataFrame(user_result,columns=["id","filepath","predicted","userinput","user_id","validity"])
+                        clean_db = pandas.DataFrame(user_result,columns=["id","filepath","predicted","userinput","user_id","validity"])
+                        gb = GridOptionsBuilder.from_dataframe(clean_db)
+                        gb.configure_column("id", header_name=("id"), editable=False)
+                        gb.configure_column("filepath", header_name=("filepath"), editable=False)
+                        gb.configure_column("predicted", header_name=("predicted"), editable=False)
+                        gb.configure_column("userinput", header_name=("userinput"), editable=True)
+                        gb.configure_column("user_id", header_name=("user_id"), editable=False)
+                        gb.configure_column("validity", header_name=("validity"), editable=False,precision=0)
+
+                    gridOptions = gb.build()
+                    dta = AgGrid(clean_db,
+                                    gridOptions=gridOptions,
+                                    reload_data=False,
+                                    height=200,
+                                    editable=True,
+                                    theme="streamlit",
+                                    data_return_mode=DataReturnMode.AS_INPUT,
+                                    update_mode=GridUpdateMode.MODEL_CHANGED)
+                    if st.button("Update"):
+                        for i in range(len(dta['data'])): # or you can use for i in range(tdf.shape[0]):
+                            # st.caption(f"df line: {clean_db.loc[i][0]} | {clean_db.loc[i][1]} || AgGrid line: {dta['data']['Name'][i]} | {dta['data']['Amt'][i]}")
+
+                                # check if any change has been done to any cell in any col by writing a caption out
+                                if clean_db.loc[i]['validity'] != dta['data']['validity'][i]:
+                                    c.execute('UPDATE test SET validity = ? where filepath=? and user_id=?',(dta['data']['validity'][i], dta['data']['filepath'][i],dta['data']['user_id'][i]))
+                                    # st.caption(f"Name column data changed from {tdf.loc[i]['Name']} to {dta['data']['Name'][i]}...")
+                                    # consequently, you can write changes to a database if/as required
+
+                                if clean_db.loc[i]['userinput'] != dta['data']['userinput'][i] and result[3]==1:
+                                    c.execute('UPDATE test SET userinput = ? where filepath=? and user_id=?',(dta['data']['userinput'][i], dta['data']['filepath'][i], dta['data']['user_id'][i]))
+                                    # st.caption(f"Amt column data changed from {tdf.loc[i]['Amt']} to {dta['data']['Amt'][i]}...")
+                                conn.commit()
+
+                    clean_db = dta['data']    # overwrite df with revised aggrid data; complete dataset at one go
+                    # tdf.to_csv(vpth + 'file1.csv', index=False)  # re/write changed data to CSV if/as requir
                     st.dataframe(clean_db)
                 elif task == "Predict":
                     st.header("Upload an image \U0001F447\U0001F447\U0001F447")

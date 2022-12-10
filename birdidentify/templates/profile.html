@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{%block title %}
+Profile Page
+{% endblock %}
+
+
+{% block content %}
+
+<div class="hero is-fullheight dark-bg">
+  <div class="hero-body is-justify-content-center is-align-items-center">
+      <div class="columns is-flex is-flex-direction-column box">
+          <div class="column">
+              <label for="email">Profile Details</label>
+              <p class="has-text-warning-dark"><h2>Email : {{ session['email'] }}</h2></p>
+          </div>
+      </div>
+  </div>
+</div>
+
+{% endblock content %}

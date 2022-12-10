@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+
+{%block title %}
+Home Page
+{% endblock %}
+
+{%block head %}
+{% endblock %}
+
+{% block content %}
+
+
+    <!-- Banner Top -->
+    <section id="home" class="is-fullheight">
+        <!-- Hero content: will be in the middle -->
+        <div >
+            <div class="hero-body dark-bg has-text-white">
+                <div class="container has-text-centered">
+                    <div class="columns ">
+                        <div class="column">
+                            <div>
+                                <img src="{{ url_for('static', filename='img/bird.jpg') }}" alt="Bird logo" width="10%" height="10%">
+                            </div>
+                            <br>
+                            <h1 class="title indigo-text">
+                                <strong id="hello" class="title has-text-white">West bengal bird species classification project</strong>
+                                <i class="em em-pray"></i>
+                            </h1>
+                        </div>
+                    </div>
+                    <div class="columns has-text-centered">
+                        <div class="column has-text-centered">
+                            Various different bird species are found in west bengal during various times of the year. 
+                            We have employeed various deep learning technologies such as Transfer learning using GoogLeNet, 
+                            dataset augmentation and Convolutional Neural Networks to classifiy with accuracy the various 
+                            birds from limited data.
+                        </div>
+                        <div class="coloumn has-text-centered">
+                            <img src="{{ url_for('static', filename='img/CNN.png') }}" alt="CNN diagram" width="100%" height="100%">
+                        </div>
+                    </div>                  
+                </div>
+            </div>
+        </div>
+        <div class="dark-bg">
+            <p class="has-text-centered">Below are given the training and validation curves for the entire GoogLeNet training phase on the augmented birds dataset.</p>
+            <div class="columns has-text-centered is-centered">
+                <br>
+                <div class="column">
+                    <img src="{{ url_for('static', filename='img/Training_curve.png') }}" alt="CNN diagram" width="90%" height="90%">
+                    <br>
+                    <span class="is-centered">Training curve for 50 epochs </span>
+                </div>
+                <div class="column">
+                    <img src="{{ url_for('static', filename='img/Validation_curve.png') }}" alt="CNN diagram" width="90%" height="90%">
+                    <br>
+                    <span class="is-centered">Validation curve for 50 epochs </span>
+                </div>
+            </div>
+        </div>
+        <!-- Hero footer: will stick at the bottom -->
+    </section>
+
+
+    
+    <footer class="footer dark-bg has-text-white pt-0">
+        <div class="content has-text-centered has-text-back dark-bg is-4 has-text-white">
+            <br>
+            <br>
+            <p class="">This website was handcrafted with love </p>
+
+            <p> by Subrata Sarkar </p>
+            <p class="">The CNN model was trained by </p>
+
+            <p> by Ishan and Kanan </p>
+            <br>
+            <p>All Rights Reserved.</p>
+            <p>
+                <a href="https://bulma.io">
+                    <img src="https://bulma.io/images/made-with-bulma.png" alt="Made with Bulma" width="256"
+                        height="48" class="icon-img-filter">
+                </a>
+            </p>
+        </div>
+    </footer>
+
+    
+    <style>
+        :root {
+            --brandColor: rgb(0, 0, 0);
+            --background: #060808;
+            --textDark: hsla(0, 0%, 0%, 0.66);
+            --textLight: #FFFFFF;
+            --secondary: #060808;
+            --primary: #FFFFFF;
+        }
+
+        .custom-text {
+            font-weight: 600;
+            color: var(--background);
+        }
+
+        .icon-img-filter{
+            filter: hue-rotate(63deg) invert(90%);
+            -webkit-filter: hue-rotate(63deg) invert(90%);
+        }
+
+        @media (max-width: 584px) {
+            .custom-row {
+                grid-template-columns: repeat(1, 1fr);
+                padding: 1rem;
+            }
+        }
+
+        @media screen and (max-width: 768px){
+            .media-content {
+                overflow-x: inherit;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .navbar-end a:hover {
+                color: #363636 !important
+            }
+
+            .left {
+                border-bottom: 5px solid var(--background);
+                border-right: 0;
+            }
+        }
+    </style>
+
+    <!-- Script -->
+    <!-- All Other Scripts here -->
+	
+
+{% endblock content %}

@@ -3,5 +3,10 @@ runs/
 # ignore all directories with the name tempdir
 tempdir/
 
+# ignore all directories with the name tempdir
+flask_session/
+
+birdidentify/__pycache__
+
 #ignore test.db
 test.db

@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      {% block title %}Bird Identify app{% endblock %}
+    </title>
+    <link rel = "icon" href ="{{ url_for('static', filename='img/pagameslogo.jpg') }}" type = "image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/15181efa86.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    {% block head %}{% endblock %}
+  </head>
+  <body class="has-navbar-fixed-top">
+    <style>
+      :root {
+            --brandColor: rgb(0, 0, 0);
+            --background: #060808;
+            --textDark: hsla(0, 0%, 0%, 0.66);
+            --textLight: #FFFFFF;
+            --secondary: #FFFFFF;
+            --primary: #060808;
+      }
+  
+      .bg-highlight{
+          color: var(--background);
+      }
+  
+      .bg-highlight-content{
+          color: var(--primary);
+      }
+  
+      .dark-bg{
+          background-color: var(--secondary);
+      }
+  
+      .primary-bg{
+          color: white !important;
+          background-color: var(--primary) !important;
+      }
+
+      .notification > button.delete {
+        border: none;
+      }
+
+      .is-hidden {
+        display: none;
+      }
+    </style>
+    <script>
+          $(document).on('click', '.notification > button.delete', function() {
+           $(this).parent().addClass('is-hidden');
+           return false;
+          });
+    </script>
+    {% block navbar %}
+
+    {% include 'nav.html' %}
+
+    {% endblock %}
+    
+    {% import 'errors.html' as errors %}
+    <div class="container has-background-warning">
+      {{ errors.print_errors_with_category() }}
+    </div>
+
+    {% block content %}
+    {% endblock %}
+
+    {% block footer %}
+
+    {% include 'footer.html' %}
+
+    {% endblock %}
+
+    {% block scripts %}
+    {% endblock %}
+
+  </body>
+</html>

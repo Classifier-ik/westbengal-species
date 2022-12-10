@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{%block title %}
+Home Page
+{% endblock %}
+
+{%block head %}
+{% endblock %}
+
+{% block content %}
+<div class="hero is-fullheight dark-bg">
+    <div class="hero-body is-justify-content-center is-align-items-center">
+        <div class="columns is-flex is-flex-direction-column box">
+            <form action = "{{ url_for('predict') }}" method = "POST" enctype = "multipart/form-data">
+                <div class="column">
+                    Upload Image
+                </div>
+                <div class="column">
+                    <input type = "file" name = "file" />
+                    <!--input type = "submit" value="Predict"-->
+                </div>
+                <div class="column">
+                    <button class="button is-link is-fullwidth" type="submit">
+                        <strong>Upload</strong>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

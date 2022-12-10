@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{%block title %}
+Predict
+{% endblock %}
+
+
+{% block content %}
+
+<div class="hero is-fullheight dark-bg">
+    <div class="hero-body is-justify-content-center is-align-items-center">
+        <div class="columns is-flex is-flex-direction-column box">
+            <div class="column">
+                Predict
+            </div>
+            <div class="column">
+                <img src="{{ url_for('display_image', filename=user_image) }}" height="100" width="100">
+            </div>
+            <div class="column">
+                <input class="input has-text-warning-dark" name="filepath" type="hidden" value="{{ user_image }}" readonly>
+            </div>
+            <div class="column">
+                <label for="User input">Predicted</label>
+                <input class="input has-text-warning-dark" name="predicted" type="text" value="{{ bird_name }}" readonly>
+            </div>
+            <div class="column">
+                <label for="userinput">User Input(If prediction not correct)</label>
+                <input class="input has-text-warning-dark" name="userinput" type="text" value="{{ bird_name }}" readonly>
+            </div>
+            <div class="column">
+                <label for="validity">Validity(0/1)</label>
+                <input class="input has-text-warning-dark" name="userinput" type="text" value="{{ validity }}" readonly>
+            </div>
+            <div class="column">
+                <button class="button is-link is-fullwidth" type="submit">
+                    <strong>Update</strong>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+  {% endblock content %}

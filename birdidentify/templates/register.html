@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{%block head %}
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="hero is-fullheight dark-bg">
+  <form action="{{ url_for('register') }}" method="post" >
+  <div class="hero-body is-justify-content-center is-align-items-center">
+      <div class="columns is-flex is-flex-direction-column box">
+          <div class="coloumn">
+              <label class="label has-text-centered">Mandatory User Details</label>
+          </div>
+          <div class="column">
+            <label for="phone">is_admin</label>
+            <div class="field is-horizontal">
+              <p>
+                  <input class="input" size="1" min="0" max="1" name="category" type="number" placeholder="is_admin">
+              </p>
+            </div>
+          </div>
+          <div class="column">
+              <label for="email">Email</label>
+              <input class="input" name="email" type="email" placeholder="Email address">
+          </div>
+          <div class="column">
+              <label for="Name">Password</label>
+              <input class="input" name="password" type="password" placeholder="Password">
+          </div>
+          <div class="column">
+              <button class="button is-link is-fullwidth" type="submit">Register</button>
+          </div>
+      </div>
+  </div>
+</form>
+</div>
+
+{% endblock content %}

@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{%block title %}
+Home Page
+{% endblock %}
+
+{%block head %}
+{% endblock %}
+
+{% block content %}
+<div class="hero is-fullheight dark-bg">
+    <div class="hero-body is-justify-content-center is-align-items-center">
+        <div class="columns is-flex is-flex-direction-column box">
+            <div class="column">
+                Dashboard
+            </div>
+            <div class="column">
+                <a class="button is-link" href="{{ url_for('viewrec') }}">
+                    <strong>View record</strong>
+                  </a>
+            </div>
+            <div class="column">
+                <a class="button is-link" href="{{ url_for('upload') }}">
+                    <strong>Predict new image</strong>
+                  </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

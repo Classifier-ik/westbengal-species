@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{%block title %}
+Home Page
+{% endblock %}
+
+{%block head %}
+{% endblock %}
+
+{% block content %}
+<div class="hero dark-bg">
+    <div class="hero-body is-justify-content-center is-align-items-center">
+        <div class="columns is-flex is-flex-direction-column box">
+            <div class="column">
+                Dashboard
+            </div>
+            <div class="column">
+                <a class="button is-link" href="{{ url_for('viewrec') }}">
+                    <strong>View record</strong>
+                  </a>
+            </div>
+            <div class="column">
+                <a class="button is-link" href="{{ url_for('upload') }}">
+                    <strong>Predict new image</strong>
+                  </a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="hero dark-bg">
+    <div class="hero-body is-justify-content-center is-align-items-center">
+        <table class="table is-hoverable">
+            <thead>
+                <tr>
+                    <td>Sl No</td>
+                    <td>Image</td>
+                    <td>Prediction</td>
+                    <td>User Input</td>
+                    <td>Validity</td>
+                    <td>Update link</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in testimlist %}
+                <tr>
+                    <td>{{ entry.id }}</td>
+                    <td><img src="{{ url_for('display_image', filename=entry.filepath) }}" height="100" width="100"></img></td>
+                    <td>{{ entry.predicted }}</td>
+                    <td>{{ entry.userinput }}</td>
+                    <td>{{ entry.validity }}</td>
+                    <td><a class="button is-link" href="{{ url_for('update',key=entry.id) }}">
+                        <strong>Update</strong>
+                    </a></td>
+                </tr>
+                {% endfor%}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

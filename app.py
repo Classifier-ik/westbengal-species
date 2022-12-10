@@ -45,7 +45,7 @@ def init_db(conn: Connection):
                             predicted TEXT NOT NULL,
                             userinput TEXT NOT NULL,
                             user_id INTEGER,
-                            validity TINYINT
+                            validity INTEGER
                     );""")
     conn.execute("""CREATE TABLE IF NOT EXISTS userstable
                         (
@@ -154,11 +154,7 @@ if selected == "Project":
             st.write("")
             # insert checking for file name repeation in single user and within various user
             image.save(os.path.join(curr_path,"tempdir",str(uuid.uuid4())+file_up.name))
-            '''  
-            with open(os.path.join(curr_path,"tempdir",file_up.name), 'wb') as handler:
-                handler.write(image)
-            '''
-
+            
         with col2:
             st.write("Your results are served here...")
             score, bird_name = predict(file_up)
@@ -248,25 +244,33 @@ elif selected == "Login":
                                     editable=True,
                                     theme="streamlit",
                                     data_return_mode=DataReturnMode.AS_INPUT,
-                                    update_mode=GridUpdateMode.MODEL_CHANGED)
+                                    update_mode=GridUpdateMode.VALUE_CHANGED)
                     if st.button("Update"):
                         for i in range(len(dta['data'])): # or you can use for i in range(tdf.shape[0]):
                             # st.caption(f"df line: {clean_db.loc[i][0]} | {clean_db.loc[i][1]} || AgGrid line: {dta['data']['Name'][i]} | {dta['data']['Amt'][i]}")
-
+                                print(clean_db.loc[i]['validity'], dta['data']['validity'][i], clean_db.loc[i]['userinput'], dta['data']['userinput'][i])
                                 # check if any change has been done to any cell in any col by writing a caption out
                                 if clean_db.loc[i]['validity'] != dta['data']['validity'][i]:
-                                    c.execute('UPDATE test SET validity = ? where filepath=? and user_id=?',(dta['data']['validity'][i], dta['data']['filepath'][i],dta['data']['user_id'][i]))
+                                    print(int(dta['data']['validity'][i]), clean_db.loc[i]['id'])
+                                    if int(dta['data']['validity'][i]):
+                                        c.execute('''UPDATE test SET validity=? where id=?''',(1, clean_db.loc[i]['id']))
+                                    else:
+                                        c.execute('''UPDATE test SET validity=? where id=?''',(0, clean_db.loc[i]['id']))
+                                    conn.commit()
+                                    print("Validity change Commited")
+                                    stringy = view_all_images()
+                                    print(stringy)
                                     # st.caption(f"Name column data changed from {tdf.loc[i]['Name']} to {dta['data']['Name'][i]}...")
                                     # consequently, you can write changes to a database if/as required
 
                                 if clean_db.loc[i]['userinput'] != dta['data']['userinput'][i] and result[3]==1:
-                                    c.execute('UPDATE test SET userinput = ? where filepath=? and user_id=?',(dta['data']['userinput'][i], dta['data']['filepath'][i], dta['data']['user_id'][i]))
+                                    c.execute('''UPDATE test SET userinput=? where id=?''',(dta['data']['userinput'][i], clean_db.loc[i]['id']))
+                                    conn.commit()
+                                    print("user input change Commited")
                                     # st.caption(f"Amt column data changed from {tdf.loc[i]['Amt']} to {dta['data']['Amt'][i]}...")
-                                conn.commit()
-
-                    clean_db = dta['data']    # overwrite df with revised aggrid data; complete dataset at one go
-                    # tdf.to_csv(vpth + 'file1.csv', index=False)  # re/write changed data to CSV if/as requir
-                    st.dataframe(clean_db)
+                        clean_db = dta['data']    # overwrite df with revised aggrid data; complete dataset at one go
+                        # tdf.to_csv(vpth + 'file1.csv', index=False)  # re/write changed data to CSV if/as requir
+                        st.dataframe(clean_db)
                 elif task == "Predict":
                     st.header("Upload an image \U0001F447\U0001F447\U0001F447")
                     file_up = st.file_uploader("", type=['jpg', 'png', 'jpeg'])

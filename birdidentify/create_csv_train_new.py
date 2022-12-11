@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 import glob
 from tqdm import tqdm
 
-from skimage import io, transform
-from keras.utils import to_categorical
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
@@ -18,6 +16,8 @@ import torchvision
 from torchvision import datasets, transforms, models
 from torch.autograd import Variable
 from torch.utils.data.sampler import SubsetRandomSampler
+import shutil
+
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -74,6 +74,9 @@ file_data['userinput'] = file_data['userinput'].str.replace(" ","-")
 for value in file_data.userinput.unique():
     path = os.path.join(basedir, "static", "train", value)
     folder_create(path)
+
+for index, row in file_data.iterrows():
+    shutil.copyfile(os.path.join(basedir, "static", "tempdir", row["filepath"]), os.path.join(basedir, "static", "train", row["userinput"], row["filepath"]))
 
 # Define transforms for the training and validation sets
 data_transforms ={
@@ -141,16 +144,18 @@ def imshow(img):
 #Visualize some sample data
 #Obtain one batch of training images
 dataiter = iter(trainloader)
-images, labels = dataiter.next()
+images, labels = dataiter.__next__()
 images = images.numpy() #convert images to numpy for display
 
 #Plot the images in the batch, along with corresponding labels
+'''
 fig = plt.figure(figsize=(25,4))
 for idx in np.arange(20):
     ax = fig.add_subplot(2, 20/2, idx+1, xticks=[], yticks=[])
     imshow(images[idx])
     #ax.set_title(str(labels[idx].item()))
     ax.set_title(classes[labels[idx]])
+'''
 
 # Specify model architecture
 # Load the pretrained model from pytorch's library and stored it in model_transfer
@@ -307,7 +312,7 @@ test(loaders_transfer, model_transfer, criterion_transfer, use_cuda)
 
 #Obtain one batch of test images
 dataiter = iter(testloader)
-images, labels = dataiter.next()
+images, labels = dataiter.__next__()
 images.numpy
 
 #Move model inputs to cuda, if GPU available
@@ -322,10 +327,12 @@ _,preds_tensor = torch.max(output,1)
 preds = np.squeeze(preds_tensor.numpy()) if not use_cuda else np.squeeze(preds_tensor.cpu().numpy())
 
 #Plot the images in the batch, along with predicted and true labels
+'''
 fig = plt.figure(figsize=(30,4))
 for idx in np.arange(20):
     ax = fig.add_subplot(2, 20/2, idx+1, xticks=[], yticks=[])
     plt.imshow(np.transpose(images.cpu()[idx], (1,2,0)))
     ax.set_title("{} ({})".format(classes[preds[idx]],classes[labels[idx]]),
                 color=("green" if preds[idx]==labels[idx].item() else "red"))
+'''
 

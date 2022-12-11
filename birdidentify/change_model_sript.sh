@@ -1,0 +1,4 @@
+python create_csv_train_new.python
+rm Googlenet_50_epochs
+cp model_transfer.pt Googlenet_50_epochs
+sudo systemctl restart birdidentify

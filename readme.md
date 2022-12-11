@@ -2,6 +2,7 @@
 
 1. Streamlit option
 
+
 This provides a minimalist option to run the app and check it.
 Open the repo and open terminal at that location and run the below commands
 ```
@@ -11,6 +12,7 @@ streamlit run app.py
 
 
 2. Flask option
+
 
 This provides the option to run a full fledged webapp with signup and login. Also it has shellscript option to update the model whenever you wish to.
 Open the repo and open terminal at that location and run the below commands to run the app in developement mode(in linux)

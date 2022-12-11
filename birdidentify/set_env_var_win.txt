@@ -1,7 +1,7 @@
 set DB_URL=mysql://root:@localhost:3306/padata
-set FLASK_APP=pagames
+set FLASK_APP=birdidentify
 set FLASK_ENV=development
-set MAIL_USERNAME=211039a6648a3f
-set MAIL_PASSWORD=17d0909188da17
+set MAIL_USERNAME=dummy
+set MAIL_PASSWORD=dummy
 set API_KEY=dummy_key
 flask run

@@ -86,18 +86,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Using dummy values for now
 # Configuration of a Gmail account for sending mails
 
-app.config['MAIL_SERVER'] = 'smtpout.secureserver.net'
+app.config['MAIL_SERVER'] = 'smtp.exampleservr.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
-'''
-app.config['MAIL_SERVER']='smtp.mailtrap.io'
-app.config['MAIL_PORT'] = 2525
-app.config['MAIL_USERNAME'] = '211039a6648a3f'
-app.config['MAIL_PASSWORD'] = '17d0909188da17'
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-'''
+
 
 if not os.getenv("MAIL_USERNAME"):
     raise RuntimeError("MAIL_USERNAME is not set")

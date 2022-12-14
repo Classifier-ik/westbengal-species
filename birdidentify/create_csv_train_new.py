@@ -17,6 +17,7 @@ from torchvision import datasets, transforms, models
 from torch.autograd import Variable
 from torch.utils.data.sampler import SubsetRandomSampler
 import shutil
+import pickle
 
 
 
@@ -134,7 +135,14 @@ trainloader = torch.utils.data.DataLoader(train_data, batch_size = 64, shuffle =
 validloader = torch.utils.data.DataLoader(valid_data, batch_size = 32, sampler = valid_sampler)
 testloader = torch.utils.data.DataLoader(test_data, batch_size = 32, sampler = test_sampler)
 
-classes=file_data.userinput.unique()
+classes=[]
+for i, fname in enumerate(os.listdir(os.path.join(basedir, "static", "train"))):
+    classes += [fname]
+classes=np.array(classes)
+
+with open(os.path.join(basedir,'static', 'model', 'classlabels1.pkl'), 'wb') as fh:
+   pickle.dump(classes, fh)
+
 
 def imshow(img):
     img = img / 2 + 0.5 #unnormalize
@@ -257,7 +265,7 @@ def train(n_epochs, loaders, model, optimizer, criterion, use_cuda, save_path):
             print('Validation loss decreased ({:.5f} --> {:.5f}). Saving model ...'.format(
                   valid_loss_min,
                   valid_loss))
-            torch.save(model.state_dict(), 'model_transfer.pt')
+            torch.save(model.state_dict(), os.path.join(basedir,'static', 'model', 'model_transfer.pt'))
             valid_loss_min = valid_loss
   
     # Return trained model
@@ -269,11 +277,11 @@ loaders_transfer = {'train': trainloader,
                     'test': testloader}
 
 # Train the model
-model_transfer = train(50, loaders_transfer, model_transfer, optimizer_transfer, criterion_transfer, use_cuda, os.path.join(basedir, 'model_transfer.pt'))
+model_transfer = train(50, loaders_transfer, model_transfer, optimizer_transfer, criterion_transfer, use_cuda, os.path.join(basedir,'static', 'model', 'model_transfer.pt'))
 
 
 # Load the model that got the best validation accuracy
-model_transfer.load_state_dict(torch.load(os.path.join(basedir, 'model_transfer.pt')))
+model_transfer.load_state_dict(torch.load(os.path.join(basedir,'static', 'model', 'model_transfer.pt')))
 
 
 def test(loaders, model, criterion, use_cuda):
@@ -326,6 +334,7 @@ output= model_transfer(images)
 _,preds_tensor = torch.max(output,1)
 preds = np.squeeze(preds_tensor.numpy()) if not use_cuda else np.squeeze(preds_tensor.cpu().numpy())
 
+print(model_transfer.state_dict())
 #Plot the images in the batch, along with predicted and true labels
 '''
 fig = plt.figure(figsize=(30,4))

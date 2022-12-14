@@ -29,7 +29,7 @@ from sqlalchemy import exc  # , func
 ts = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 
-with open('classlabels.pkl', 'rb') as f:
+with open(os.path.join(app.config['UPLOAD_FOLDER'],'model', 'classlabels.pkl'), 'rb') as f:
     class_names = pickle.load(f)
 
 
@@ -57,7 +57,7 @@ def check_hashes(password,hashed_text):
 
 
 def predictly(image_path):
-    model = torch.load('Googlenet_50_epochs',
+    model = torch.load(os.path.join(app.config['UPLOAD_FOLDER'],'model', 'Googlenet_50_epochs'),
                        map_location=torch.device('cpu'))
 
     # https://pytorch.org/docs/stable/torchvision/models.html
@@ -75,13 +75,13 @@ def predictly(image_path):
     model.eval()
     outputs = model(batch_t)
     _, predicted = torch.max(outputs, 1)
-    title = [class_names[x] for x in predicted]
+    # title = [class_names[x] for x in predicted]
     prob = torch.nn.functional.softmax(outputs, dim=1)[0] * 100
-    classes = pandas.read_csv('bird_dataset.csv', header=None)
+    # classes = pandas.read_csv('bird_dataset.csv', header=None)
     # print("prob: ", float(max(prob)))
     # print("title: ", title[0])
     # print("name: ", classes[0][int(title[0])-1].split('.')[0])
-    return (float(max(prob)), classes[0][int(title[0])-1].split('.')[0])
+    return (float(max(prob)), class_names[predicted])
 
 
 @app.route('/display/<filename>')

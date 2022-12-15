@@ -141,7 +141,7 @@ def updatemode():
         classes += [fname]
     classes=np.array(classes)
 
-    with open('classlabels1.pkl', 'wb') as fh:
+    with open(os.path.join(UPLOAD_FOLDER,'model','classlabels1.pkl'), 'wb') as fh:
         pickle.dump(classes, fh)
 
 
@@ -266,7 +266,7 @@ def updatemode():
                 print('Validation loss decreased ({:.5f} --> {:.5f}). Saving model ...'.format(
                     valid_loss_min,
                     valid_loss))
-                torch.save(model.state_dict(), 'model_transfer.pt')
+                torch.save(model.state_dict(), os.path.join(UPLOAD_FOLDER,'model','model_transfer.pt'))
                 valid_loss_min = valid_loss
     
         # Return trained model
@@ -278,11 +278,11 @@ def updatemode():
                         'test': testloader}
 
     # Train the model
-    model_transfer = train(50, loaders_transfer, model_transfer, optimizer_transfer, criterion_transfer, use_cuda, os.path.join(basedir, 'model_transfer.pt'))
+    model_transfer = train(50, loaders_transfer, model_transfer, optimizer_transfer, criterion_transfer, use_cuda, os.path.join(UPLOAD_FOLDER,'model','model_transfer.pt'))
 
 
     # Load the model that got the best validation accuracy
-    model_transfer.load_state_dict(torch.load(os.path.join(basedir, 'model_transfer.pt')))
+    model_transfer.load_state_dict(torch.load(os.path.join(UPLOAD_FOLDER,'model','model_transfer.pt')))
 
 
     def test(loaders, model, criterion, use_cuda):
@@ -349,3 +349,4 @@ def updatemode():
 
 if __name__=="__main__":
     updatemode()
+

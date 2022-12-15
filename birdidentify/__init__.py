@@ -26,7 +26,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 15 * 60
 
 
 # db url from env
-dotenv_path = Path('/home/supersub/.env')
+dotenv_path = Path('/home/user/.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 
@@ -117,7 +117,6 @@ migrate = Migrate(app, db)
 # Get key from env when in production mode.
 if os.getenv("FLASK_ENV") and os.getenv("FLASK_ENV") == "development":
     app.config["SECRET_KEY"] = "OCML3BRawWEUkdbvkduP"
-    # app.secret_key = "OCML3BRawWEUeaxcuKH"
     # print("key set")
 elif os.getenv("SECRET_KEY"):
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")

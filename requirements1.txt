@@ -1,0 +1,14 @@
+Pillow==9.3.0
+torch
+torchvision
+numpy
+Flask
+Flask-Session
+SQLAlchemy
+flask_migrate
+flask_bcrypt
+pandas
+itsdangerous
+numpy
+werkzeug
+Flask-Mail

@@ -7,8 +7,11 @@ from .models import (
     User, Test
 )
 from .custom_decorators import login_required
-from .create_csv_train_new import updatemode
+import subprocess
 from PIL import Image
+import torch
+from torch import nn, optim
+import torch.nn.functional as F
 from torchvision import models, transforms
 import torch
 import os
@@ -19,6 +22,8 @@ import pickle
 import hashlib
 import uuid
 from werkzeug.utils import secure_filename
+from sys import platform
+
 
 
 from itsdangerous import URLSafeTimedSerializer
@@ -58,8 +63,39 @@ def check_hashes(password,hashed_text):
 
 
 def predictly(image_path):
-    model = torch.load(os.path.join(app.config['UPLOAD_FOLDER'],'model', 'Googlenet_50_epochs'),
-                       map_location=torch.device('cpu'))
+    model_transfer = models.googlenet(pretrained=True)
+
+    # Check if GPU is available
+    use_cuda = torch.cuda.is_available()
+    if use_cuda:
+        model_transfer = model_transfer.cuda()
+    
+    for param in model_transfer.parameters():
+        param.requires_grad=True
+
+
+    # Define n_inputs takes the same number of inputs from pre-trained model
+    n_inputs = model_transfer.fc.in_features #refer to the fully connected layer only
+
+    # Add last linear layer (n_inputs -> n classes). In this case the ouput is 4 classes
+    # New layer automatically has requires_grad = True
+    last_layer = nn.Linear(n_inputs, len(class_names))
+
+    model_transfer.fc = last_layer
+
+    # If GPU is available, move the model to GPU
+    if use_cuda:
+        model_transfer = model_transfer.cuda()
+    
+    # Check to see the last layer produces the expected number of outputs
+    # print(model_transfer.fc.out_features)
+
+
+    # Specify loss function and optimizer
+    criterion_transfer = nn.CrossEntropyLoss()
+    optimizer_transfer = optim.SGD(model_transfer.parameters(), lr=0.001, momentum=0.9)
+    model_transfer.load_state_dict(torch.load(os.path.join(app.config['UPLOAD_FOLDER'],'model', 'Googlenet_50_epochs'),
+                       map_location=torch.device('cpu')))
 
     # https://pytorch.org/docs/stable/torchvision/models.html
     transform = transforms.Compose([
@@ -73,8 +109,8 @@ def predictly(image_path):
     img = Image.open(image_path)
     batch_t = torch.unsqueeze(transform(img), 0)
 
-    model.eval()
-    outputs = model(batch_t)
+    model_transfer.eval()
+    outputs = model_transfer(batch_t)
     _, predicted = torch.max(outputs, 1)
     # title = [class_names[x] for x in predicted]
     prob = torch.nn.functional.softmax(outputs, dim=1)[0] * 100
@@ -111,12 +147,22 @@ def viewrec():
 
 @app.route('/updatemodel/', methods=['GET'])
 @login_required(['admin'])
-def update(key):
+def updatemod():
     """Update selected subject"""
     if request.method == 'GET':
-        updatemode()
+        try:
+            if platform == "linux" or platform == "linux2":
+                output = subprocess.check_output(['sh','./change_model_sript.sh'], shell=True, cwd = os.path.dirname(os.path.dirname(app.config['UPLOAD_FOLDER'])))
+                print(output)
+            elif platform == "win32":
+                output = open("output.log", "a+")
+                p = subprocess.Popen(['powershell.exe',os.path.join(os.path.dirname(os.path.dirname(app.config['UPLOAD_FOLDER'])),'change_model_sript.ps1')], shell=True,stdout=output, cwd = os.path.dirname(os.path.dirname(app.config['UPLOAD_FOLDER'])))
+                p.communicate()
+                output.close()
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
         flash("Model has been set to updating")
-        redirect(url_for('dash'))
+        return redirect(url_for('dash'))
 
 
 @app.route('/update/<int:key>/', methods=['GET', 'POST'])
@@ -276,6 +322,7 @@ def login():
 
 
 @app.route('/dashboard/profile/')
+@login_required(['admin','user'])
 def profile():
     """
     Display profile info

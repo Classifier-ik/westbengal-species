@@ -24,6 +24,13 @@ Home Page
                     <strong>Predict new image</strong>
                   </a>
             </div>
+            {% if user.isAdmin %}
+            <div class="column">
+                <a class="button is-link" href="{{ url_for('updatemod') }}">
+                    <strong>Update model</strong>
+                  </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

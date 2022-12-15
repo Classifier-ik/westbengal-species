@@ -7,6 +7,7 @@ from .models import (
     User, Test
 )
 from .custom_decorators import login_required
+from .create_csv_train_new import updatemode
 from PIL import Image
 from torchvision import models, transforms
 import torch
@@ -106,6 +107,16 @@ def viewrec():
             return render_template("viewrecord.html", testimlist=testimlist)
         else:
             return redirect(url_for('login'))
+
+
+@app.route('/updatemodel/', methods=['GET'])
+@login_required(['admin'])
+def update(key):
+    """Update selected subject"""
+    if request.method == 'GET':
+        updatemode()
+        flash("Model has been set to updating")
+        redirect(url_for('dash'))
 
 
 @app.route('/update/<int:key>/', methods=['GET', 'POST'])

@@ -12,3 +12,6 @@ itsdangerous
 numpy
 werkzeug
 Flask-Mail
+python-dotenv
+tqdm
+scikit-learn

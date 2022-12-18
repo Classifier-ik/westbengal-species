@@ -67,8 +67,10 @@ def predictly(image_path):
 
     # Check if GPU is available
     use_cuda = torch.cuda.is_available()
+    device = "cpu"
     if use_cuda:
         model_transfer = model_transfer.cuda()
+        device = "cuda"
     
     for param in model_transfer.parameters():
         param.requires_grad=True
@@ -96,6 +98,8 @@ def predictly(image_path):
     optimizer_transfer = optim.SGD(model_transfer.parameters(), lr=0.001, momentum=0.9)
     model_transfer.load_state_dict(torch.load(os.path.join(app.config['UPLOAD_FOLDER'],'model', 'Googlenet_50_epochs'),
                        map_location=torch.device('cpu')))
+    model_transfer.to("cpu")
+
 
     # https://pytorch.org/docs/stable/torchvision/models.html
     transform = transforms.Compose([

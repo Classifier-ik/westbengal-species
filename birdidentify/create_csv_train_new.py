@@ -172,6 +172,7 @@ def updatemode():
 
     # Check if GPU is available
     use_cuda = torch.cuda.is_available()
+    print(use_cuda)
     if use_cuda:
         model_transfer = model_transfer.cuda()
 

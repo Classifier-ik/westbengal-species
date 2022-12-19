@@ -1,6 +1,4 @@
 Pillow==9.3.0
-torch
-torchvision
 numpy
 Flask
 Flask-Session
@@ -15,3 +13,5 @@ Flask-Mail
 python-dotenv
 tqdm
 scikit-learn
+theano
+keras

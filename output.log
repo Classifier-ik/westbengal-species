@@ -434,3 +434,6 @@ GoogLeNet(
   (dropout): Dropout(p=0.2, inplace=False)
   (fc): Linear(in_features=1024, out_features=1000, bias=True)
 )
+1024
+1000
+64

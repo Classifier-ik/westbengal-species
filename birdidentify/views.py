@@ -9,11 +9,13 @@ from .models import (
 from .custom_decorators import login_required
 import subprocess
 from PIL import Image
+'''
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
 from torchvision import models, transforms
 import torch
+'''
 import os
 import pandas
 import sqlite3
@@ -23,6 +25,10 @@ import hashlib
 import uuid
 from werkzeug.utils import secure_filename
 from sys import platform
+import numpy as np
+import cv2
+import keras
+from keras.models import model_from_json
 
 
 
@@ -35,8 +41,19 @@ from sqlalchemy import exc  # , func
 ts = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 
-with open(os.path.join(app.config['UPLOAD_FOLDER'],'model', 'classlabels.pkl'), 'rb') as f:
+with open(os.path.join(os.path.dirname(app.config['UPLOAD_FOLDER']),'model', 'classlabels.pkl'), 'rb') as f:
     class_names = pickle.load(f)
+# print(class_names)
+json_file = open(os.path.join(os.path.dirname(app.config['UPLOAD_FOLDER']),'model', 'model_bird.json'), 'r')
+
+loaded_model_json = json_file.read()
+json_file.close()
+model = model_from_json(loaded_model_json)
+
+# load weights into new model
+model.load_weights(os.path.join(os.path.dirname(app.config['UPLOAD_FOLDER']),'model', 'model_bird.h5'))
+print("Loaded model from disk")
+
 
 
 def allowed_file(filename):
@@ -63,11 +80,14 @@ def check_hashes(password,hashed_text):
 
 
 def predictly(image_path):
+    '''
+    # pytorch googlelenet not giving correct result always
     model_transfer = models.googlenet(pretrained=True)
 
     # Check if GPU is available
     use_cuda = torch.cuda.is_available()
     device = "cpu"
+    print(use_cuda)
     if use_cuda:
         model_transfer = model_transfer.cuda()
         device = "cuda"
@@ -115,14 +135,30 @@ def predictly(image_path):
 
     model_transfer.eval()
     outputs = model_transfer(batch_t)
+    print(outputs)
     _, predicted = torch.max(outputs, 1)
     # title = [class_names[x] for x in predicted]
     prob = torch.nn.functional.softmax(outputs, dim=1)[0] * 100
+    classy = np.argmax(prob.detach().numpy(), axis=0)
+    print(classy)
+    for i in range(len(class_names)):
+        print(i+1,class_names[i])
     # classes = pandas.read_csv('bird_dataset.csv', header=None)
     # print("prob: ", float(max(prob)))
     # print("title: ", title[0])
     # print("name: ", classes[0][int(title[0])-1].split('.')[0])
-    return (float(max(prob)), class_names[predicted])
+    return (float(max(prob)), class_names[classy])
+    '''
+    print(image_path)
+    #out = model.predict(x)
+    img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    img = cv2.resize(img, (100, 100))
+    if len(img.shape) > 2 and img.shape[2] == 4:
+        #convert the image from RGBA2RGB
+        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+    pred = model.predict(img.reshape(-1,100,100,3))
+    classes_x=np.argmax(pred,axis=1)
+    return (pred[0][classes_x][0]*100,class_names[classes_x][0])
 
 
 @app.route('/display/<filename>')
@@ -248,7 +284,7 @@ def userinput():
             # add the new user to the database
             db.session.add(img_data)
             db.session.commit()
-            return redirect(url_for('update',key = user.id))
+            return redirect(url_for('update',key = img_data.id))
         else:
             img_data = Test(
                                 filepath=filepath,

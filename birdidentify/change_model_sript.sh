@@ -1,9 +1,12 @@
 python create_csv_train_new.python
-rm static/tempdir/model/Googlenet_50_epochs
-cp static/tempdir/model/model_transfer.pt static/tempdir/model/Googlenet_50_epochs
-rm static/tempdir/model/model_transfer.pt
-cp static/tempdir/model/classlabels.pkl static/tempdir/model/classlabels0.pkl
-rm static/tempdir/model/classlabels.pkl
-cp static/tempdir/model/classlabels1.pkl static/tempdir/model/classlabels.pkl
-rm static/tempdir/model/classlabels1.pkl
+rm static/model/model_bird.json
+rm static/model/model_bird.h5
+cp static/model/model_bird1.json static/model/model_bird.json
+cp static/model/model_bird1.h5 static/model/model_bird.h5
+rm static/model/model_bird1.h5
+rm static/model/model_bird1.json
+cp static/model/classlabels.pkl static/model/classlabels0.pkl
+rm static/model/classlabels.pkl
+cp static/model/classlabels1.pkl static/model/classlabels.pkl
+rm static/model/classlabels1.pkl
 sudo systemctl restart birdidentify

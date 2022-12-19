@@ -16,6 +16,10 @@ Predict
             <div class="column">
                 <img src="{{ url_for('display_image', filename=user_image) }}" height="100" width="100">
             </div>
+            <div class="column">
+                <label for="User input">Confidence Score: </label>
+                <label for="User input">{{ score }}</label>
+            </div>
             <form action="{{ url_for('userinput') }}" method="post" >
                 <div class="column">
                     <input class="input has-text-warning-dark" name="filepath" type="hidden" value="{{ user_image }}" readonly>

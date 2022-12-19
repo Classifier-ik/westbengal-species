@@ -1,33 +1,33 @@
 def updatemode():
+    # Author: Anonymous
+    # project: Cat vs Dog
+
     import sqlite3
     from sqlite3 import Connection
-    import os
-    import pandas as pd
-    import numpy as np
-    from sklearn.model_selection import train_test_split
+    import numpy as np # linear algebra
+    import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
     import cv2
     import matplotlib.pyplot as plt
     import glob
     from tqdm import tqdm
 
-    import torch
-    from torch import nn, optim
-    import torch.nn.functional as F
-    import torchvision
-    from torchvision import datasets, transforms, models
-    from torch.autograd import Variable
-    from torch.utils.data.sampler import SubsetRandomSampler
-    import shutil
-    import pickle
+    from skimage import io, transform
+    from keras.utils import to_categorical
+    import time
+    from sklearn.model_selection import train_test_split
+    seed = 333
+    np.random.seed(seed)
 
+    # Input data files are available in the "../input/" directory.
+    # For example, running this (by clicking run or pressing Shift+Enter) will list the files in the input directory
 
+    import os
 
+    #path to images
+    img_dir = "static/train"
     basedir = os.path.abspath(os.path.dirname(__file__))
-    UPLOAD_FOLDER = os.path.join(basedir, "static", "tempdir")
+    UPLOAD_FOLDER = os.path.join(basedir, "static")
     URI_SQLITE_DB = os.path.join(basedir, 'test.db')
-    #Define the data directory
-    data_dir = os.path.join(basedir, "static", "train")
-
     def folder_create(path):
         if os.path.exists(path):
             return True
@@ -35,7 +35,7 @@ def updatemode():
             os.mkdir(path)
             return True
 
-
+    data_dir = URI_SQLITE_DB = os.path.join(basedir, 'static', 'train')
     folder_create(data_dir)
 
     def init_db(conn: Connection):
@@ -80,274 +80,257 @@ def updatemode():
     for index, row in file_data.iterrows():
         shutil.copyfile(os.path.join(basedir, "static", "tempdir", row["filepath"]), os.path.join(basedir, "static", "train", row["userinput"], row["filepath"]))
 
-    # Define transforms for the training and validation sets
-    data_transforms ={
-        "train_transforms": transforms.Compose([transforms.RandomRotation(30),
-                                            transforms.RandomResizedCrop(224), 
-                                            transforms.RandomHorizontalFlip(), 
-                                            transforms.ToTensor(),
-                                            transforms.Normalize([0.485, 0.456, 0.406], 
-                                                                    [0.229, 0.224, 0.225])]),
-    "valid_transforms": transforms.Compose([transforms.Resize(225),
-                                            transforms.CenterCrop(224),
-                                            transforms.ToTensor(),
-                                            transforms.Normalize([0.485, 0.456, 0.406],
-                                                                    [0.229, 0.224, 0.225])]), 
-        "test_transforms": transforms.Compose([transforms.Resize(225),
-                                            transforms.CenterCrop(224),
-                                            transforms.ToTensor(),
-                                            transforms.Normalize([0.485, 0.456, 0.406],
-                                                                    [0.229, 0.224, 0.225])])
-    }
+    # img_dir2 = "../input/horses-or-humans-dataset/horse-or-human/horse-or-human"
 
-    # Split the dataset into train, validation and test
-    train_data = 0.8
-    valid_data = 0.1
-    test_data = 0.1
+    # list all available images type
+    # print(os.listdir(img_dir))
+    # print(os.listdir(img_dir2))
 
-    # Load the datasets with ImageFolder
-    train_data = datasets.ImageFolder(data_dir, transform=data_transforms["train_transforms"])#loading dataset
-    valid_data = datasets.ImageFolder(data_dir, transform=data_transforms["valid_transforms"])
-    test_data = datasets.ImageFolder(data_dir, transform=data_transforms["test_transforms"])
+    def load_data(img_dir):
+        X = []
+        y = []
+        labels = []
+        idx = 0
+        for i,folder_name in enumerate(os.listdir(img_dir)):
+            labels.append(folder_name)
+            for file_name in tqdm(os.listdir(f'{img_dir}/{folder_name}')):
+                if file_name.endswith('jpg'):
+                    im = cv2.imread(f'{img_dir}/{folder_name}/{file_name}')
+                    if im is not None:
+                        im = cv2.resize(im, (100, 100))
+                        X.append(im)
+                        y.append(idx)
+                elif file_name.endswith('png'):
+                    im = cv2.imread(f'{img_dir}/{folder_name}/{file_name}')
+                    if im is not None:
+                        im = cv2.resize(im, (100, 100))
+                        if len(im.shape) > 2 and im.shape[2] == 4:
+                            #convert the image from RGBA2RGB
+                            im = cv2.cvtColor(im, cv2.COLOR_BGRA2BGR)
+                        X.append(im)
+                        y.append(idx)
+            idx+=1
+        X = np.asarray(X)
+        y = np.asarray(y)
+        labels = np.asarray(labels)
+        return X,y,labels
 
-    # Obtain training indices that will be used for validation and test
-    num_train = len(train_data)
-    indices = list(range(num_train))
-    # np.random.shuffle(indices)
-    train_count = int(0.8*num_train)
-    valid_count = int(0.1*num_train)
-    test_count = num_train - train_count - valid_count
-    train_idx = indices[:train_count]
-    valid_idx = indices[train_count:train_count+valid_count]
-    test_idx = indices[train_count+valid_count:]
 
-    print(len(train_idx), len(valid_idx), len(test_idx))
-    print("Training", train_count, np.sum(len(train_idx)/num_train))
-    print("Validation", valid_count, np.sum(len(valid_idx)/num_train))
-    print("Test", test_count, np.sum(len(test_idx)/num_train))
-
-    # Define a custom sampler for the dataset loader avoiding recreating the dataset (just creating a new loader for each different sampling)
-    train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(valid_idx)
-    test_sampler = SubsetRandomSampler(test_idx)
-
-    # Define the dataloaders using the image datasets. Dataloader is used to load our data in batches
-    trainloader = torch.utils.data.DataLoader(train_data, batch_size = 64, shuffle = True)
-    validloader = torch.utils.data.DataLoader(valid_data, batch_size = 32, sampler = valid_sampler)
-    testloader = torch.utils.data.DataLoader(test_data, batch_size = 32, sampler = test_sampler)
-
-    classes=[]
-    for i, fname in enumerate(os.listdir(os.path.join(basedir, "static", "train"))):
-        classes += [fname]
-    classes=np.array(classes)
+    X,y,labels = load_data(img_dir)
 
     with open(os.path.join(UPLOAD_FOLDER,'model','classlabels1.pkl'), 'wb') as fh:
-        pickle.dump(classes, fh)
+        labelo = np.array(labels)
+        labelo = labelo.reshape(-1)
+        labelo = labelo.asarray(labelo)
+        pickle.dump(labelo, fh)
 
+    #fix y
+    y = y.reshape(-1,1)
 
-    def imshow(img):
-        img = img / 2 + 0.5 #unnormalize
-        plt.imshow(np.transpose(img, (1,2,0))) #convert tensor image type to numpy image type for visualization
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
 
+    train_img = X_train
+    train_labels = y_train
+    test_img = X_test
+    test_labels = y_test
+    train_img.shape, train_labels.shape, test_img.shape, test_labels.shape
 
-    #Visualize some sample data
-    #Obtain one batch of training images
-    dataiter = iter(trainloader)
-    images, labels = dataiter.__next__()
-    images = images.numpy() #convert images to numpy for display
+    #one-hot-encode the labels
+    num_classes = len(labels)
+    train_labels_cat = to_categorical(train_labels,num_classes)
+    test_labels_cat = to_categorical(test_labels,num_classes)
+    train_labels_cat.shape, test_labels_cat.shape
 
-    #Plot the images in the batch, along with corresponding labels
-    '''
-    fig = plt.figure(figsize=(25,4))
-    for idx in np.arange(20):
-        ax = fig.add_subplot(2, 20/2, idx+1, xticks=[], yticks=[])
-        imshow(images[idx])
-        #ax.set_title(str(labels[idx].item()))
-        ax.set_title(classes[labels[idx]])
-    '''
+    # re-shape the images data
+    train_data = train_img
+    test_data = test_img
+    train_data.shape, test_data.shape
 
-    # Specify model architecture
-    # Load the pretrained model from pytorch's library and stored it in model_transfer
-    model_transfer = models.googlenet(pretrained=True)
+    # shuffle the training dataset & set aside val_perc % of rows as validation data
+    for _ in range(5): 
+        indexes = np.random.permutation(len(train_data))
 
-    # Check if GPU is available
-    use_cuda = torch.cuda.is_available()
-    print(use_cuda)
-    if use_cuda:
-        model_transfer = model_transfer.cuda()
+    # randomly sorted!
+    train_data = train_data[indexes]
+    train_labels_cat = train_labels_cat[indexes]
 
-    #print the model to see all the layers
-    print(model_transfer)
+    # now we will set-aside val_perc% of the train_data/labels as cross-validation sets
+    val_perc = 0.10
+    val_count = int(val_perc * len(train_data))
+    print(val_count)
 
+    # first pick validation set
+    val_data = train_data[:val_count,:]
+    val_labels_cat = train_labels_cat[:val_count,:]
 
-    #Lets read the fully connected layer
-    print(model_transfer.fc.in_features)
-    print(model_transfer.fc.out_features)
+    # leave rest in training set
+    train_data2 = train_data[val_count:,:]
+    train_labels_cat2 = train_labels_cat[val_count:,:]
 
+    train_data2.shape, train_labels_cat2.shape, val_data.shape, val_labels_cat.shape, test_data.shape, test_labels_cat.shape
 
-    for param in model_transfer.parameters():
-        param.requires_grad=True
-
-
-    # Define n_inputs takes the same number of inputs from pre-trained model
-    n_inputs = model_transfer.fc.in_features #refer to the fully connected layer only
-
-    # Add last linear layer (n_inputs -> n classes). In this case the ouput is 4 classes
-    # New layer automatically has requires_grad = True
-    last_layer = nn.Linear(n_inputs, len(classes))
-
-    model_transfer.fc = last_layer
-
-    # If GPU is available, move the model to GPU
-    if use_cuda:
-        model_transfer = model_transfer.cuda()
-    
-    # Check to see the last layer produces the expected number of outputs
-    print(model_transfer.fc.out_features)
-
-
-    # Specify loss function and optimizer
-    criterion_transfer = nn.CrossEntropyLoss()
-    optimizer_transfer = optim.SGD(model_transfer.parameters(), lr=0.001, momentum=0.9)
-
-    # Train the model
-    def train(n_epochs, loaders, model, optimizer, criterion, use_cuda, save_path):
-        '''returns trained model'''
-        # Initialize tracker for minimum validation loss
-        valid_loss_min = np.inf
-    
-        for epoch in range(1, n_epochs+1):
-            # In the training loop, I track down the loss
-            # Initialize variables to monitor training and validation loss
-            train_loss = 0.0
-            valid_loss = 0.0
+    # a utility function that plots the losses and accuracies for training & validation sets across our epochs
+    def show_plots(history):
+        """ Useful function to view plot of loss values & accuracies across the various epochs """
+        loss_vals = history['loss']
+        val_loss_vals = history['val_loss']
+        epochs = range(1, len(history['acc'])+1)
         
-            # Model training
-            model.train()
-            for batch_idx, (data,target) in enumerate(trainloader):
-                # 1st step: Move to GPU
-                if use_cuda:
-                    data,target = data.cuda(), target.cuda()
+        f, ax = plt.subplots(nrows=1,ncols=2,figsize=(16,4))
         
-                # Then, clear (zero out) the gradient of all optimized variables
-                optimizer.zero_grad()
-                # Forward pass: compute predicted outputs by passing inputs to the model
-                output = model(data)
-                # Perform the Cross Entropy Loss. Calculate the batch loss.
-                loss = criterion(output, target)
-                # Backward pass: compute gradient of the loss with respect to model parameters
-                loss.backward()
-                # Perform optimization step (parameter update)
-                optimizer.step()
-                # Record the average training loss
-                train_loss = train_loss + ((1/ (batch_idx + 1 ))*(loss.data-train_loss))
+        # plot losses on ax[0]
+        ax[0].plot(epochs, loss_vals, color='navy',marker='o', linestyle=' ', label='Training Loss')
+        ax[0].plot(epochs, val_loss_vals, color='firebrick', marker='*', label='Validation Loss')
+        ax[0].set_title('Training & Validation Loss')
+        ax[0].set_xlabel('Epochs')
+        ax[0].set_ylabel('Loss')
+        ax[0].legend(loc='best')
+        ax[0].grid(True)
         
-            # Model validation
-            model.eval()
-            for batch_idx, (data,target) in enumerate(validloader):
-                # Move to GPU
-                if use_cuda:
-                    data, target = data.cuda(), target.cuda()
-                # Update the average validation loss
-                # Forward pass: compute predicted outputs by passing inputs to the model
-                output = model(data)
-                # Calculate the batch loss
-                loss = criterion(output, target)
-                # Update the average validation loss
-                valid_loss = valid_loss + ((1/ (batch_idx +1)) * (loss.data - valid_loss))
+        # plot accuracies
+        acc_vals = history['acc']
+        val_acc_vals = history['val_acc']
+
+        ax[1].plot(epochs, acc_vals, color='navy', marker='o', ls=' ', label='Training Accuracy')
+        ax[1].plot(epochs, val_acc_vals, color='firebrick', marker='*', label='Validation Accuracy')
+        ax[1].set_title('Training & Validation Accuracy')
+        ax[1].set_xlabel('Epochs')
+        ax[1].set_ylabel('Accuracy')
+        ax[1].legend(loc='best')
+        ax[1].grid(True)
         
-            # print training/validation stats
-            print('Epoch: {} \tTraining Loss: {:.5f} \tValidation Loss: {:.5f}'.format(
-                epoch,
-                train_loss,
-                valid_loss))
+        plt.show()
+        plt.close()
         
-            # Save the model if validation loss has decreased
-            if valid_loss <= valid_loss_min:
-                print('Validation loss decreased ({:.5f} --> {:.5f}). Saving model ...'.format(
-                    valid_loss_min,
-                    valid_loss))
-                torch.save(model.state_dict(), os.path.join(UPLOAD_FOLDER,'model','model_transfer.pt'))
-                valid_loss_min = valid_loss
-    
-        # Return trained model
-        return model
-
-    # Define loaders transfer
-    loaders_transfer = {'train': trainloader,
-                        'valid': validloader,
-                        'test': testloader}
-
-    # Train the model
-    model_transfer = train(50, loaders_transfer, model_transfer, optimizer_transfer, criterion_transfer, use_cuda, os.path.join(UPLOAD_FOLDER,'model','model_transfer.pt'))
+        # delete locals from heap before exiting
+        del loss_vals, val_loss_vals, epochs, acc_vals, val_acc_vals
 
 
-    # Load the model that got the best validation accuracy
-    model_transfer.load_state_dict(torch.load(os.path.join(UPLOAD_FOLDER,'model','model_transfer.pt')))
-
-
-    def test(loaders, model, criterion, use_cuda):
-
-        # monitor test loss and accuracy
-        test_loss = 0.
-        correct = 0.
-        total = 0.
-
-        model_transfer.eval() #set model into evaluation/testing mode. It turns of drop off layer
-        #Iterating over test data
-        for batch_idx, (data, target) in enumerate(loaders['test']):
-            # move to GPU
-            if use_cuda:
-                data, target = data.cuda(), target.cuda()
-            # forward pass: compute predicted outputs by passing inputs to the model
-            output = model(data)
-            # calculate the loss
-            loss = criterion(output, target)
-            # update average test loss 
-            test_loss = test_loss + ((1 / (batch_idx + 1)) * (loss.data - test_loss))
-            # convert output probabilities to predicted class
-            pred = output.data.max(1, keepdim=True)[1]
-            # compare predictions to 
-            correct += np.sum(np.squeeze(pred.eq(target.data.view_as(pred))).cpu().numpy())
-            total += data.size(0)
-                
-        print('Test Loss: {:.6f}\n'.format(test_loss))
-
-        print('\nTest Accuracy: %2d%% (%2d/%2d)' % (
-            100. * correct / total, correct, total))
-
-    # call test function    
-    test(loaders_transfer, model_transfer, criterion_transfer, use_cuda)
-
-
-    #Obtain one batch of test images
-    dataiter = iter(testloader)
-    images, labels = dataiter.__next__()
-    images.numpy
-
-    #Move model inputs to cuda, if GPU available
-    if use_cuda:
-        images = images.cuda()
+    def print_time_taken(start_time, end_time):
+        secs_elapsed = end_time - start_time
         
-    #Get sample outputs
-    output= model_transfer(images)
+        SECS_PER_MIN = 60
+        SECS_PER_HR  = 60 * SECS_PER_MIN
+        
+        hrs_elapsed, secs_elapsed = divmod(secs_elapsed, SECS_PER_HR)
+        mins_elapsed, secs_elapsed = divmod(secs_elapsed, SECS_PER_MIN)
+        
+        if hrs_elapsed > 0:
+            print('Time taken: %d hrs %d mins %d secs' % (hrs_elapsed, mins_elapsed, secs_elapsed))
+        elif mins_elapsed > 0:
+            print('Time taken: %d mins %d secs' % (mins_elapsed, secs_elapsed))
+        elif secs_elapsed > 1:
+            print('Time taken: %d secs' % (secs_elapsed))
+        else:
+            print('Time taken - less than 1 sec')
 
-    #Convert output probabilities to predicted class
-    _,preds_tensor = torch.max(output,1)
-    preds = np.squeeze(preds_tensor.numpy()) if not use_cuda else np.squeeze(preds_tensor.cpu().numpy())
 
-    print(model_transfer.state_dict())
-    #Plot the images in the batch, along with predicted and true labels
-    '''
-    fig = plt.figure(figsize=(30,4))
-    for idx in np.arange(20):
-        ax = fig.add_subplot(2, 20/2, idx+1, xticks=[], yticks=[])
-        plt.imshow(np.transpose(images.cpu()[idx], (1,2,0)))
-        ax.set_title("{} ({})".format(classes[preds[idx]],classes[labels[idx]]),
-                    color=("green" if preds[idx]==labels[idx].item() else "red"))
-    '''
+    def get_commonname(idx):
+        sciname = labels[idx][0]
+        return sciname
+
+
+    from keras.models import Sequential
+    from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+
+
+    import numpy as np
+    from keras.utils.np_utils import to_categorical
+
+    from keras.models import Sequential
+    from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D, BatchNormalization,Activation,MaxPooling2D
+    from keras.preprocessing.image import ImageDataGenerator
+    from keras.callbacks import LearningRateScheduler
+    from keras.datasets import mnist
+    from keras.models import load_model
+    from sklearn.model_selection import train_test_split
+    from keras.utils import np_utils
+    from PIL import Image
+
+
+    #data augmentation
+    datagen = ImageDataGenerator(
+            rotation_range=30,
+            zoom_range = 0.25,  
+            width_shift_range=0.1, 
+            height_shift_range=0.1)
+    # datagen = ImageDataGenerator(
+    #     rotation_range=8,
+    #     shear_range=0.3,
+    #     zoom_range = 0.08,
+    #     width_shift_range=0.08,
+    #     height_shift_range=0.08)
+
+
+    #create multiple cnn model for ensembling
+    #model 1
+    model = Sequential()
+
+    model.add(Conv2D(32, kernel_size = 3, activation='relu', input_shape = (100, 100, 3)))
+    model.add(BatchNormalization())
+    model.add(Conv2D(32, kernel_size = 3, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Conv2D(32, kernel_size = 5, strides=2, padding='same', activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.4))
+
+    model.add(Conv2D(64, kernel_size = 3, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Conv2D(64, kernel_size = 3, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Conv2D(64, kernel_size = 5, strides=2, padding='same', activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.4))
+
+    model.add(Conv2D(128, kernel_size = 3, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Conv2D(128, kernel_size = 3, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Conv2D(128, kernel_size = 5, strides=2, padding='same', activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.4))
+
+
+    model.add(Conv2D(256, kernel_size = 4, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(Flatten())
+    model.add(Dropout(0.4))
+    model.add(Dense(num_classes, activation='softmax'))
+
+    # use adam optimizer and categorical cross entropy cost
+    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+
+    # after each epoch decrease learning rate by 0.95
+    annealer = LearningRateScheduler(lambda x: 1e-3 * 0.95 ** x)
+
+    # train
+    epochs = 50
+    j=0
+    start_time = time.time()
+    history = model.fit_generator(datagen.flow(train_data2, train_labels_cat2, batch_size=64),epochs = epochs, steps_per_epoch = train_data2.shape[0]/64,validation_data = (val_data, val_labels_cat), callbacks=[annealer], verbose=1)
+    end_time = time.time()
+    print_time_taken(start_time, end_time)
+
+
+    print("CNN {0:d}: Epochs={1:d}, Train accuracy={2:.5f}, Validation accuracy={3:.5f}".format(j+1,epochs,history.history['accuracy'][epochs-1],history.history['val_accuracy'][epochs-1]))
+
+    test_loss, test_accuracy = model.evaluate(test_data, test_labels_cat, batch_size=64)
+    print('Test loss: %.4f accuracy: %.4f' % (test_loss, test_accuracy))
+
+    from keras.models import model_from_json
+    from keras.models import load_model
+
+    # serialize model to JSON
+    #  the keras model which is trained is defined as 'model' in this example
+    model_json = model.to_json()
+
+
+    with open("static/model/model_bird1.json", "w") as json_file:
+        json_file.write(model_json)
+
+    # serialize weights to HDF5
+    model.save_weights("static/model/model_bird1.h5")
 
 
 if __name__=="__main__":
     updatemode()
-

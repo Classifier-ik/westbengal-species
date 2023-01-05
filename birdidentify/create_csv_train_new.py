@@ -10,7 +10,7 @@ def updatemode():
     import matplotlib.pyplot as plt
     import glob
     from tqdm import tqdm
-
+    
     from skimage import io, transform
     from keras.utils import to_categorical
     import time
@@ -22,6 +22,7 @@ def updatemode():
     # For example, running this (by clicking run or pressing Shift+Enter) will list the files in the input directory
 
     import os
+    # os.environ['KERAS_BACKEND'] = 'theano'
 
     #path to images
     img_dir = "static/train"
